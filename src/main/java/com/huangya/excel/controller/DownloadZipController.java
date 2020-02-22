@@ -15,13 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,41 +36,50 @@ import java.util.zip.ZipOutputStream;
 @RestController
 public class DownloadZipController {
 
-    @GetMapping("/downloadZip")
-    public void downloadZip(HttpServletRequest request, HttpServletResponse response) {
-        try {
-            response.reset();
-            response.setContentType("application/octet-stream");
-            response.setHeader("Content-Disposition", "attachment;filename=".concat(String.valueOf(URLEncoder.encode("报销.xlsx", "UTF-8"))));
-            String realPath = request.getSession().getServletContext().getRealPath("/");
-            //创建已经ZipOutputStream
-            ZipOutputStream zop = new ZipOutputStream(response.getOutputStream());
-            //创建一个ZipEntry
-            ZipEntry zipEntry = new ZipEntry(realPath + "a/1.png");
-            zop.putNextEntry(zipEntry);
-            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(realPath + "upload/1.png"));
-            int size = 0;
-            byte[] buffer = new byte[1024];  //设置读取数据缓存大小
-            while ((size = bis.read(buffer)) > 0) {
-                zop.write(buffer, 0, size);
-            }
-            //关闭输入输出流
-            zop.closeEntry();
-            bis.close();
-            zop.close();
-        } catch (Exception e) {
+    @GetMapping("downloadzip")
+    public ResponseEntity<Resource> downloadZip() throws IOException {
+        ClassPathResource classPathResource = new ClassPathResource("template/img/1.png");
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ZipOutputStream zop = new ZipOutputStream(byteArrayOutputStream);
+        ZipEntry zipEntry = new ZipEntry("a/1.png");
+        zop.putNextEntry(zipEntry);
+        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(classPathResource.getFile()));
+        int size = 0;
+        byte[] buffer = new byte[1024];
+        while ((size = bis.read(buffer)) > 0) {
+            zop.write(buffer, 0, size);
         }
+        zop.closeEntry();
+        bis.close();
+        zop.close();
+        Resource resource = new ByteArrayResource(byteArrayOutputStream.toByteArray());
+
+        HttpHeaders headers = buildHttpHeaders("test.zip");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(resource.getInputStream().available())
+                .body(resource);
+
+    }
+
+    private HttpHeaders buildHttpHeaders(String filename) {
+        HttpHeaders headers = new HttpHeaders();
+        // 下载之后需要在请求头中放置文件名，该文件名按照ISO_8859_1编码。
+        String filenames = new String(filename.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
+        headers.setContentDispositionFormData("attachment", filenames);
+        headers.setContentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE));
+        return headers;
     }
 
 
     /**
      * 拷贝sheet
-     *
      * @param request
      * @param response
      */
     @GetMapping("copysheet")
-    public ResponseEntity<Resource> copySheet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public ResponseEntity<Resource> copySheet() throws IOException {
         ClassPathResource classPathResource = new ClassPathResource("template/报销.xlsx");
         TemplateExportParams params = new TemplateExportParams(classPathResource.getPath());
         //第一个excel的第一个sheet模版数据写入
@@ -91,17 +97,8 @@ public class DownloadZipController {
         workbook.write(byteArrayOutputStream);
         Resource resource = new ByteArrayResource(byteArrayOutputStream.toByteArray());
 
-        /*
-         * 构造响应的头
-         */
-        HttpHeaders headers = new HttpHeaders();
-        // 下载之后需要在请求头中放置文件名，该文件名按照ISO_8859_1编码。
-        String filenames = new String("报销.xlsx".getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
-        headers.setContentDispositionFormData("attachment", filenames);
-        headers.setContentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE));
-        /*
-         * 返还资源
-         */
+        HttpHeaders headers = buildHttpHeaders("报销.xlsx");
+
         return ResponseEntity.ok()
                 .headers(headers)
                 .contentLength(resource.getInputStream().available())
@@ -110,7 +107,6 @@ public class DownloadZipController {
 
     /**
      * 数据写入到excel模版里面
-     *
      * @return
      */
     private HashMap<String, Object> getStringObjectHashMap() {
