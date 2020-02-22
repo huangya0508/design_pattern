@@ -31,10 +31,10 @@ import java.util.zip.ZipOutputStream;
  * @author nonpool
  * @version 1.0
  * @since 2020/2/21
- * 下载压缩包 压缩包里创建文件夹
+ * 下载
  */
 @RestController
-public class DownloadZipController {
+public class DownloadController {
 
     @GetMapping("downloadzip")
     public ResponseEntity<Resource> downloadZip() throws IOException {
@@ -60,26 +60,13 @@ public class DownloadZipController {
                 .headers(headers)
                 .contentLength(resource.getInputStream().available())
                 .body(resource);
-
     }
-
-    private HttpHeaders buildHttpHeaders(String filename) {
-        HttpHeaders headers = new HttpHeaders();
-        // 下载之后需要在请求头中放置文件名，该文件名按照ISO_8859_1编码。
-        String filenames = new String(filename.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
-        headers.setContentDispositionFormData("attachment", filenames);
-        headers.setContentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE));
-        return headers;
-    }
-
 
     /**
-     * 拷贝sheet
-     * @param request
-     * @param response
+     * 拷贝sheet后下载excel
      */
     @GetMapping("copysheet")
-    public ResponseEntity<Resource> copySheet() throws IOException {
+    public ResponseEntity<Resource> downloadAndcopySheet() throws IOException {
         ClassPathResource classPathResource = new ClassPathResource("template/报销.xlsx");
         TemplateExportParams params = new TemplateExportParams(classPathResource.getPath());
         //第一个excel的第一个sheet模版数据写入
@@ -103,6 +90,15 @@ public class DownloadZipController {
                 .headers(headers)
                 .contentLength(resource.getInputStream().available())
                 .body(resource);
+    }
+
+    private HttpHeaders buildHttpHeaders(String filename) {
+        HttpHeaders headers = new HttpHeaders();
+        // 下载之后需要在请求头中放置文件名，该文件名按照ISO_8859_1编码。
+        String filenames = new String(filename.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
+        headers.setContentDispositionFormData("attachment", filenames);
+        headers.setContentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE));
+        return headers;
     }
 
     /**
