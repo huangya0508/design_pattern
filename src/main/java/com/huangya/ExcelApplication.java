@@ -1,4 +1,4 @@
-package com.huangya.excel;
+package com.huangya;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

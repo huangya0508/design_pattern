@@ -6,14 +6,23 @@ import com.huangya.excel.util.XSSFSheetCopyUtil;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +36,7 @@ import java.util.zip.ZipOutputStream;
  * @since 2020/2/21
  * 下载压缩包 压缩包里创建文件夹
  */
-@RestController("/downloadZipController")
+@RestController
 public class DownloadZipController {
 
     @GetMapping("/downloadZip")
@@ -59,35 +68,49 @@ public class DownloadZipController {
 
     /**
      * 拷贝sheet
+     *
      * @param request
      * @param response
      */
-    @GetMapping("copySheet")
-    public void copySheet(HttpServletRequest request, HttpServletResponse response) {
-       try {
-           String realPath = request.getSession().getServletContext().getRealPath("/");
-           TemplateExportParams params = new TemplateExportParams(realPath + "/resources/template/报销.xlsx");
-           //第一个excel的第一个sheet模版数据写入
-           HashMap<String, Object> map = getStringObjectHashMap();
-           Workbook workbook = ExcelExportUtil.exportExcel(params, map);
-           //创建一个sheet
-           Sheet sheet = workbook.createSheet();
-           //第二个excel模版数据写入
-           HashMap<String, Object> mapNew = getStringObjectHashMap();
-           Workbook workbookNew = ExcelExportUtil.exportExcel(params, mapNew);
-           //将第二个excel的sheet拷贝到第一个excel新建的sheet里面去
-           XSSFSheetCopyUtil.copySheets((XSSFSheet) sheet, (XSSFSheet) workbookNew.getSheetAt(0));
-           response.reset();
-           response.setContentType("application/octet-stream");
-           response.setHeader("Content-Disposition", "attachment;filename=".concat(String.valueOf(URLEncoder.encode("报销.xlsx", "UTF-8"))));
-           workbook.write(response.getOutputStream());
-       }catch (Exception e){
+    @GetMapping("copysheet")
+    public ResponseEntity<Resource> copySheet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        ClassPathResource classPathResource = new ClassPathResource("template/报销.xlsx");
+        TemplateExportParams params = new TemplateExportParams(classPathResource.getPath());
+        //第一个excel的第一个sheet模版数据写入
+        HashMap<String, Object> map = getStringObjectHashMap();
+        Workbook workbook = ExcelExportUtil.exportExcel(params, map);
+        //创建一个sheet
+        Sheet sheet = workbook.createSheet();
+        //第二个excel模版数据写入
+        HashMap<String, Object> mapNew = getStringObjectHashMap();
+        Workbook workbookNew = ExcelExportUtil.exportExcel(params, mapNew);
+        //将第二个excel的sheet拷贝到第一个excel新建的sheet里面去
+        XSSFSheetCopyUtil.copySheets((XSSFSheet) sheet, (XSSFSheet) workbookNew.getSheetAt(0));
+        //输出
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        workbook.write(byteArrayOutputStream);
+        Resource resource = new ByteArrayResource(byteArrayOutputStream.toByteArray());
 
-       }
+        /*
+         * 构造响应的头
+         */
+        HttpHeaders headers = new HttpHeaders();
+        // 下载之后需要在请求头中放置文件名，该文件名按照ISO_8859_1编码。
+        String filenames = new String("报销.xlsx".getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
+        headers.setContentDispositionFormData("attachment", filenames);
+        headers.setContentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE));
+        /*
+         * 返还资源
+         */
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(resource.getInputStream().available())
+                .body(resource);
     }
 
     /**
      * 数据写入到excel模版里面
+     *
      * @return
      */
     private HashMap<String, Object> getStringObjectHashMap() {
