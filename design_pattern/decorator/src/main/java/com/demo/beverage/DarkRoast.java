@@ -13,7 +13,13 @@ public class DarkRoast extends Beverage {
 
     @Override
     public double cost() {
-        return .99;
+        if (getSize() == BeverageSizeEnum.TALL){
+            return .49;
+        }else if (getSize() == BeverageSizeEnum.VENTI){
+            return 1.49;
+        }else {
+            return .99;
+        }
     }
 
 }

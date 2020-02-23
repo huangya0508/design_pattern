@@ -13,6 +13,12 @@ public class Concentrate extends Beverage {
 
     @Override
     public double cost() {
-        return 1.99;
+        if (getSize() == BeverageSizeEnum.TALL){
+            return 1.59;
+        }else if (getSize() == BeverageSizeEnum.VENTI){
+            return 2.49;
+        }else {
+            return 1.99;
+        }
     }
 }

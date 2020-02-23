@@ -13,6 +13,12 @@ public class HouseBlend extends Beverage{
 
     @Override
     public double cost() {
-        return .89;
+        if (getSize() == BeverageSizeEnum.TALL){
+            return .59;
+        }else if (getSize() == BeverageSizeEnum.VENTI){
+            return 1.49;
+        }else {
+            return .89;
+        }
     }
 }

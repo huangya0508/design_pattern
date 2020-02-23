@@ -31,5 +31,10 @@ public class StarbuzzCoffee {
         houseBlend = new Whip(houseBlend);
         System.out.println(houseBlend.getDesription()+"$"+houseBlend.cost());
 
+//        //订一杯小杯Espresso
+        Beverage beverage = new Concentrate();
+        beverage.setSize(BeverageSizeEnum.TALL);
+        System.out.println("小杯"+beverage.getDesription()+"$"+beverage.cost());
+
     }
 }
