@@ -12,7 +12,7 @@ import com.demo.condiment.Whip;
  */
 public class StarbuzzCoffee {
     public static void main(String[] args) {
-        //订一杯Espresso 不需要掉料
+        //订一杯Espresso 不需要调料
         Beverage espresso = new Espresso();
         System.out.println(espresso.getDesription()+"$"+espresso.cost());
 
@@ -31,10 +31,10 @@ public class StarbuzzCoffee {
         houseBlend = new Whip(houseBlend);
         System.out.println(houseBlend.getDesription()+"$"+houseBlend.cost());
 
-//        //订一杯小杯Espresso
+        //订一杯小杯Espresso
         Beverage beverage = new Concentrate();
         beverage.setSize(BeverageSizeEnum.TALL);
-        System.out.println("小杯"+beverage.getDesription()+"$"+beverage.cost());
+        System.out.println("TALL"+beverage.getDesription()+"$"+beverage.cost());
 
     }
 }
