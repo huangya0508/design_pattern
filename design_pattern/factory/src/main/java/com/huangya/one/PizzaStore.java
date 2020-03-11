@@ -1,4 +1,4 @@
-package com.huangya;
+package com.huangya.one;
 
 /**
  * @author nonpool
