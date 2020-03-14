@@ -4,6 +4,7 @@ package com.huangya.two;
  * @author nonpool
  * @version 1.0
  * @since 2020/3/11
+ * 工厂方法
  */
 public class PizzaTest {
     public static void main(String[] args) {
